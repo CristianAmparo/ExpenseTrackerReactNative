@@ -1,0 +1,183 @@
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { Modal, StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import AlertModal from './AlertModal';
+const AddBalanceModal = ({ visible, onClose }) => {
+    const [addInputBalance, setAddInputBalance] = useState('');
+    const [error, setError] = useState('');
+    const [alertVisible, setAlertVisible] = useState(false)
+    const [alertMessage, setAlertMessage] = useState('')
+    const [isFocused, setIsFocused] = useState(false);
+
+    useEffect(() => {
+        if(!visible){
+            setError('')
+        }
+    },  [visible]); // Add editModalVisible to dependencies
+    useEffect(()=> {
+        console.log(addInputBalance)
+    })
+      const addBalance = async () => {
+        if (!addInputBalance || addInputBalance <= 0) {
+          setError('Invalid Input');
+          return;
+        }
+      
+    
+        try {
+          const response = await axios.post(`http://10.211.0.106:3000/api/balance/22`, {
+            added_balance: addInputBalance,
+          });
+    
+          setAlertVisible(true);
+          setAlertMessage(response.data.message)
+          setError('');
+          setAddInputBalance('');
+          onClose();
+        } catch (error) {
+          setError(error.response?.data?.error || 'Failed to Add Balance');
+        }
+      };
+
+    useEffect(() => {
+        if (!visible) {
+            setIsFocused(false);
+        }
+    }, [visible]);
+
+    const handleAddInputChange = (text) => {
+        setAddInputBalance(text);
+      };
+
+    return (
+        <>
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={visible}
+            onRequestClose={onClose}
+        >
+            <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Add Balance</Text>
+
+                    {/* Input Field for Balance */}
+                    <View style={{ width: '100%', position: 'relative' }}>
+                        <TextInput
+                            style={styles.input}
+                            keyboardType="numeric"
+                            value={addInputBalance}
+                            onChangeText={handleAddInputChange}
+                            onFocus={() => setIsFocused(true)} // Set focused state
+                            onBlur={() => setIsFocused(false)} // Reset focused state
+                            />
+                        <Text style={isFocused ? styles.placeHolderFocus : styles.placeHolder1}>
+                            Enter Balance
+                        </Text>
+                    </View>
+
+                            {error && <Text style={{justifyContent: 'center', marginTop: -15, marginBottom:10, color: 'red'}}>{error}</Text>}
+                    <View style={styles.buttonContainer}>
+                        <View style={styles.buttonWrapper}>
+                            <TouchableOpacity style={styles.saveButton} onPress={addBalance}>
+                                <Text style={styles.saveButtonText}>Add</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.buttonWrapper}>
+                            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+        <AlertModal
+          visible={alertVisible}
+          onClose={()=>setAlertVisible(false)}
+          title="Success"
+          message={alertMessage}
+          duration={2000}
+        />
+    </>
+    );
+};
+
+const styles = StyleSheet.create({
+    modalBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContainer: {
+        width: 300,
+        padding: 20,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    input: {
+        width: '100%',
+        padding: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        marginBottom: 20,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%', // Make sure the container uses full width
+    },
+    buttonWrapper: {
+        flex: 1, // Allow buttons to take equal space
+        marginHorizontal: 5, // Add margin between buttons
+    },
+    placeHolder1: {
+        color: 'gray',
+        position: 'absolute',
+        top: 16,
+        left: 10,
+    },
+    placeHolderFocus: {
+        color: 'black',
+        position: 'absolute',
+        top: -13,
+        left: 10,
+        backgroundColor: 'white',
+        padding: 5,
+    },
+    cancelButton: {
+        backgroundColor: 'white',
+        borderColor: 'black',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingVertical: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cancelButtonText: {
+        color: 'black',
+        fontWeight: 'bold',
+    },
+    saveButton: {
+        backgroundColor: 'black', // Change this to your desired background color
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingVertical: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    saveButtonText: {
+        color: 'white', // Change this to your desired text color
+        fontWeight: 'bold',
+    },
+});
+
+export default AddBalanceModal;
