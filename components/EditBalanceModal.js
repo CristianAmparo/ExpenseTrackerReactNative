@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import AlertModal from './AlertModal';
+import { getData } from '../utils/Storage';
 const EditBalanceModal = ({ visible, onClose}) => {
     const [editInputBalance, setEditInputBalance] = useState('')
     const [alertVisible, setAlertVisible] = useState(false)
@@ -9,7 +10,22 @@ const EditBalanceModal = ({ visible, onClose}) => {
     const [error, setError] = useState('');
     const [isFocused, setIsFocused] = useState(false);
   
+    const [id, setId] = useState(null)
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const userData = await getData('userData');
+                setId(userData.id) // Assuming getData is defined
     
+            } catch (error) {
+                console.error("Failed to fetch user data:", error);
+            }
+        };
+        if (visible) {
+            fetchUserData();
+        }
+    }, [visible]);
     const handleEditInputChange = (text) => {
         setEditInputBalance(text);
       };
@@ -20,7 +36,7 @@ const EditBalanceModal = ({ visible, onClose}) => {
         }
         
         try {
-          const response = await axios.put(`http://10.211.0.106:3000/api/balance/22`, {
+          const response = await axios.put(`http://10.211.0.106:3000/api/balance/${id}`, {
             new_balance: editInputBalance,
           });
           setAlertVisible(true)

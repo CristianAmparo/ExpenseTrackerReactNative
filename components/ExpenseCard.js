@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { formatDate } from "../utils/DateFormat"; // Make sure to adapt this import as needed
 import { TruncatedString } from "../utils/TruncateString"; // Make sure to adapt this import as needed
 
-const ExpenseCard = ({ title, category, amount, date, onPress }) => {
+const ExpenseCard = ({ title, category, amount, date, onPress, onLongPress }) => {
     const formatter = new Intl.NumberFormat("en-US");
 
     return (
-        <TouchableOpacity onPress={onPress} style={styles.card}>
+        <TouchableOpacity onPress={onPress} onLongPress={onLongPress} style={styles.card}>
             <View style={styles.content}>
                 <View style={styles.textContainer}>
                     <Text style={styles.title}>{TruncatedString(title)}</Text>

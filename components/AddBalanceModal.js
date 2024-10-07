@@ -2,18 +2,30 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import AlertModal from './AlertModal';
+import { getData } from '../utils/Storage';
 const AddBalanceModal = ({ visible, onClose }) => {
     const [addInputBalance, setAddInputBalance] = useState('');
     const [error, setError] = useState('');
     const [alertVisible, setAlertVisible] = useState(false)
     const [alertMessage, setAlertMessage] = useState('')
     const [isFocused, setIsFocused] = useState(false);
+    const [id, setId] = useState(null)
 
     useEffect(() => {
-        if(!visible){
-            setError('')
+        const fetchUserData = async () => {
+            try {
+                const userData = await getData('userData');
+                setId(userData.id) // Assuming getData is defined
+    
+            } catch (error) {
+                console.error("Failed to fetch user data:", error);
+            }
+        };
+        if (visible) {
+            fetchUserData();
         }
-    },  [visible]); // Add editModalVisible to dependencies
+    }, [visible]);
+ // Add editModalVisible to dependencies
     useEffect(()=> {
         console.log(addInputBalance)
     })
@@ -25,7 +37,7 @@ const AddBalanceModal = ({ visible, onClose }) => {
       
     
         try {
-          const response = await axios.post(`http://10.211.0.106:3000/api/balance/22`, {
+          const response = await axios.post(`http://10.211.0.106:3000/api/balance/${id}`, {
             added_balance: addInputBalance,
           });
     
@@ -42,6 +54,7 @@ const AddBalanceModal = ({ visible, onClose }) => {
     useEffect(() => {
         if (!visible) {
             setIsFocused(false);
+            setError('')
         }
     }, [visible]);
 
