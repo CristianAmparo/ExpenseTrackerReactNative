@@ -1,162 +1,91 @@
-import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Alert, Text, View, SafeAreaView, StatusBar as StatusBarNative, Platform, Image, TouchableOpacity, FlatList } from 'react-native';
-import axios from 'axios';
-import AddBalanceModal from './components/AddBalanceModal';
-import EditBalanceModal from './components/EditBalanceModal';
-import ExpenseCard from './components/ExpenseCard';
+import { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import HomeScreen from './screens/HomeScreen'; 
+import ExpensesScreen from './screens/ExpensesScreen';
+import HistoryScreen from './screens/HistoryScreen';
+import { Ionicons } from '@expo/vector-icons';
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
+import { getData } from './utils/Storage'; // Import the method to get data from storage
 
-import addIcon from './assets/add.png';
-import editIcon from './assets/edit.png';
-import EditExpenseModal from './components/EditExpenseModal';
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-
-
-export default function App() {
-  const [balanceData, setBalanceData] = useState();
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false); // State for edit modal
-  const [editExpenseModalVisible, setEditExpenseModalVisible] = useState(false); // State for edit modal
-  const [expenses, setExpenses] = useState([]);
-  const [editExpenseItem, setEditExpenseItem] = useState();
-  const [loading, setLoading] = useState(true);
-
-
- 
-  const fetchBalance = async () => {
-    try {
-      const response = await fetch('http://10.211.0.106:3000/api/balance/22');
-      const data = await response.json();
-      setBalanceData(data.balance);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError(error.response.data.error)
-    }
-  };
-
-  const fetchExpenses = async () => {
-    try {
-        setLoading(true); // Start loading
-        const response = await axios.get(`http://10.211.0.106:3000/api/expenses/22?limit=10`);
-        setExpenses(response.data.data); // Update state with fetched data
-    } catch (err) {
-        setError(err.message || 'An error occurred while fetching expenses');
-    } finally {
-        setLoading(false); // End loading
-    }
-};
-
-// useEffect to fetch expenses when component mounts
-useEffect(() => {
-    fetchBalance();
-    fetchExpenses();
-},  [addModalVisible, editModalVisible, editExpenseModalVisible]);
-
-  const toggleAddBalanceModal = () => {
-    setAddModalVisible(!addModalVisible);
-  };
-
-  const toggleEditBalanceModal = () => {
-    setEditModalVisible(!editModalVisible);
-  };
-
-  const toggleEditExpenseModal = (id, expense_title, expense_amount, expense_category) => {
-    setEditExpenseModalVisible(!editExpenseModalVisible);
-    setEditExpenseItem({id, expense_title, expense_amount, expense_category})
-  }
-
+// Tab Navigator
+function MyTabs() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="auto" />
-      <View style={styles.balanceContainer}>
-        <Text style={[styles.balanceText, { fontSize: 20, fontWeight: 'bold' }]}>Total Balance</Text>
-        <Text style={styles.balanceText}>₱{balanceData || 0}</Text>
-
-        {/* Clickable Add Icon */}
-        <TouchableOpacity style={{ top: 10, right: 50, position: 'absolute' }} onPress={toggleAddBalanceModal}>
-          <Image source={addIcon} style={styles.addIcon} />
-        </TouchableOpacity>
-
-        {/* Clickable Edit Icon */}
-        <TouchableOpacity style={{ top: 10, right: 20, position: 'absolute' }} onPress={toggleEditBalanceModal}>
-          <Image source={editIcon} style={styles.editIcon} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.expensesArea}>
-            {expenses.length > 0 ? (
-                <FlatList
-                    data={expenses}
-                    renderItem={({ item }) => (
-                        <ExpenseCard
-                            title={item.expense_title}
-                            category={item.expense_category}
-                            amount={item.expense_amount}
-                            date={item.expense_date}
-                            onPress={() => toggleEditExpenseModal(item.id, item.expense_title, item.expense_amount, item.expense_category)} // Pass the ID to the modal toggle function
-                        />
-                    )}
-                    keyExtractor={(item) => item.id.toString()} // Make sure to convert id to string
-                />
-            ) : (
-                <Text>No expenses available</Text> // Handle the case where there are no expenses
-            )}
-        </View>
-
-      {/* Include the BalanceModal here */}
-      <AddBalanceModal
-        visible={addModalVisible}
-        onClose={toggleAddBalanceModal}
-      />
-
-      {/* Include the EditBalanceModal here */}
-      <EditBalanceModal
-        visible={editModalVisible} // Use edit modal state
-        onClose={toggleEditBalanceModal}
-      />
-      {<EditExpenseModal 
-       visible={editExpenseModalVisible} // Use edit modal state
-       onClose={toggleEditExpenseModal}
-       item={editExpenseItem}
-      />}
-
-    </SafeAreaView>
-  
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Expenses') {
+            iconName = focused ? 'wallet' : 'wallet-outline';
+          } else if (route.name === 'History') {
+            iconName = focused ? 'time' : 'time-outline';
+          }
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        headerShown: true, //set to false if want to set a custom header
+      })}
+      tabBarOptions={{
+        activeTintColor: 'black',
+        inactiveTintColor: 'gray',
+      }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Expenses" component={ExpensesScreen} />
+      <Tab.Screen name="History" component={HistoryScreen} />
+    </Tab.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-    paddingTop: Platform.OS === "android" ? StatusBarNative.currentHeight + 20 : 0,
-    padding: 10,
-  },
-  balanceContainer: {
-    height: 100,
-    backgroundColor: 'black',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  expensesArea: {
-    height: '80%',
-    padding: 10,
-  },
-  
-  balanceText: {
-    color: 'white',
-    fontSize: 18,
-  },
-  addIcon: {
-    width: 15,
-    height: 15,
-    padding: 5,
-  },
-  editIcon: {
-    width: 15,
-    height: 15,
-    padding: 5,
-  },
-});
+// Stack Navigator with header hidden
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+
+  useEffect(() => {
+    const checkUserData = async () => {
+      const userData = await getData('userData');
+      if (userData) {
+        setIsAuthenticated(true); // User data found, set authenticated
+      } else {
+        setIsAuthenticated(false); // No user data, set not authenticated
+      }
+    };
+
+    checkUserData();
+    // Set an interval to check every 10 seconds
+    const intervalId = setInterval(checkUserData, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  if (isAuthenticated === null) {
+    return null; // You may want to return a loading spinner here
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false, // Hide header for all stack screens
+        }}
+      >
+        {isAuthenticated ? (
+          <>
+            <Stack.Screen  name="Main" component={MyTabs} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
